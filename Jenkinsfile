@@ -2,8 +2,9 @@ pipeline {
     agent any 
     environment {
     DOCKERHUB_CREDENTIALS = credentials('nclsp01')
+    APP_NAME = "nclsp01/flask"
     }
-    stages { 
+    stages {
 
         stage('Build docker image') {
             steps {  
@@ -20,7 +21,40 @@ pipeline {
                 sh 'docker push nclsp01/flask:$BUILD_NUMBER'
             }
         }
-}
+        stage('SCM Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/ncls-p/jenkins-docker.git'
+            }
+        }
+        stage('Scan Docker Image') {
+            steps {
+                sh 'trivy image $APP_NAME:latest'
+            }
+        }
+        stage('Scan Docker Image') {
+        steps {
+                script {
+                // Run Trivy to scan the Docker image
+                                def trivyOutput = sh(script: "trivy image
+                $APP_NAME:latest", returnStdout: true).trim()
+                image."
+                // Display Trivy scan results
+                println trivyOutput
+                // Check if vulnerabilities were found
+                if (trivyOutput.contains("Total: 0")) {
+                    echo "No vulnerabilities found in the Docker
+                } else {
+                    echo "Vulnerabilities found in the Docker
+                image."
+                your requirements
+                // You can take further actions here based on
+                // For example, failing the build if
+                vulnerabilities are found
+                // error "Vulnerabilities found in the Docker
+                }
+            }
+        }
+    }
 post {
         always {
             sh 'docker logout'
